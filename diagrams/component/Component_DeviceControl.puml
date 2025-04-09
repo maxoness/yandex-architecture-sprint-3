@@ -1,0 +1,37 @@
+@startuml
+title SmartHouse System / DeviceControlService Component Diagram
+
+top to bottom direction
+
+!includeurl ../C4_templates/C4_Component.puml
+
+Container_Boundary(ControllerManagementServices, "Управление контроллерами систем умного дома") {
+  Container(DeviceControlService, DeviceControlService, "Java, Spring", "Получение и исполнение команд управления умными устройствами, \n а также предоставление истории команд и состояний")
+  ContainerDb(DeviceControlDatabase, DeviceControlDatabase, "Cassandra", "Хранит историю управления умными устройствами и их состояний")
+  ContainerQueue(ControlCommandsQueue, ControlCommandsQueue, "Kafka", "Топики для отправки управляющие команд на умные устройства и получения результатов выполнения")
+  Container(ProtocolControlService, ProtocolControlService, "Java, Spring", "Непосредственное протокольное взаимодействие с умными устройствами")
+}
+
+Container(DeviceControlService, "DeviceControlService") {
+    Component(DeviceControlController, "DeviceControl \n Controller", "REST Controller", "Принимает запросы на управление умными устройствами, на получение истории команд и состояний устройств")
+    Component(DeviceControlServiceLayer, "DeviceControl \n Service Layer", "Business logic", "Реализует бизнес логику управления устройствами, а также получения истории команд и состояний устройств")
+    Component(RepositoryLayer, "DeviceControl \n Repository Layer", "Data access logic", "Реализует логику доступа к данным и их изменения")
+    Component(DeviceControlKafkaProducer, "DeviceControl \n KafkaProducer", "Kafka Producer", "Отправляет управляющие команды в топик кафки")
+    Component(DeviceControlKafkaListener, "DeviceControl \n KafkaListener", "Kafka Listener", "Читает результаты выполнения команд из топика кафки")
+}
+
+
+
+Rel(DeviceControlController,DeviceControlServiceLayer,"Обрабатывает запрос")
+Rel(DeviceControlServiceLayer,RepositoryLayer,"Получает/изменяет данные")
+Rel(RepositoryLayer,DeviceControlDatabase,"Читает/изменяет историю команд и состояний устройств")
+Rel(DeviceControlServiceLayer,DeviceControlKafkaProducer,"Получает/изменяет данные")
+Rel(DeviceControlKafkaListener,DeviceControlServiceLayer,"Обрабатывает полученные результаты выполнения команд")
+Rel(DeviceControlKafkaProducer,ControlCommandsQueue,"Отправляет управляющие команды в топик кафки")
+Rel(DeviceControlKafkaListener,ControlCommandsQueue,"Читает результаты выполнения команд из топика кафки")
+
+Rel(DeviceControlServiceLayer,ProtocolControlService,"Синхронная отправка управляющей команды на устройство")
+Rel(DeviceControlServiceLayer,ProtocolControlService,"Синхронное получение состояния устройства")
+
+
+@enduml

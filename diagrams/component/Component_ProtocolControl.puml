@@ -1,0 +1,34 @@
+@startuml
+title SmartHouse System / ProtocolControlService Component Diagram
+
+top to bottom direction
+
+!includeurl ../C4_templates/C4_Component.puml
+
+Container_Boundary(ControllerManagementServices, "Управление контроллерами систем умного дома") {
+
+  ContainerQueue(ControlCommandsQueue, ControlCommandsQueue, "Kafka", "Топики для отправки команд на умные устройства и получения результатов выполнения")
+  Container(ProtocolControlService, ProtocolControlService, "Java, Spring", "Непосредственное протокольное взаимодействие с умными устройствами")
+  Container_Ext(controller, "Модуль управления умным устройством", "Управляет умным устройством в доме")
+}
+
+Container(ProtocolControlService, "ProtocolControlService") {
+    Component(ProtocolControlController, "ProtocolControl \n Controller", "REST Controller", "Принимает синхронные запросы на запросы на отправку управляющих и статусных команд")
+    Component(ProtocolControlServiceLayer, "ProtocolControl \n Service Layer", "Business logic", "Реализует бизнес логику управления устройствами")
+    Component(ProtocolControlAdapter, "ProtocolControl \n Adapter", "Library", "Преобразовывает команды в протокольные последовательности и отправляет их на устройства")
+    Component(ProtocolControlKafkaProducer, "ProtocolControl \n KafkaProducer", "Kafka Producer", "Отправляет результаты выполнения команды в топик кафки")
+    Component(ProtocolControlKafkaListener, "ProtocolControl \n KafkaListener", "Kafka Listener", "Получает управляющие и статусные команды из топика кафки")
+}
+
+
+Rel(ProtocolControlController,ProtocolControlServiceLayer,"Обрабатывает запросы на отправку команд")
+Rel(ProtocolControlKafkaProducer,ControlCommandsQueue,"Отправляет результаты выполнения команды в топик кафки")
+Rel(ProtocolControlKafkaListener,ControlCommandsQueue,"Получает команды из топика кафки")
+Rel(ProtocolControlKafkaListener,ProtocolControlServiceLayer,"Обрабатывает запросы на отправку команд")
+Rel(ProtocolControlServiceLayer,ProtocolControlAdapter,"Отправляет команды")
+Rel(ProtocolControlServiceLayer,ProtocolControlKafkaProducer,"Публикует результат выполнения команды")
+Rel(ProtocolControlAdapter,controller,"Отправляет последовательности команд на умные устройства")
+
+
+
+@enduml

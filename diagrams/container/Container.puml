@@ -3,7 +3,7 @@ title SmardHouse System Container Diagram
 
 top to bottom direction
 
-!include <C4/C4_Container>
+!includeurl ../C4_templates/C4_Container.puml
 
 Person_Ext(user, "User", "Пользователь, в доме которого есть совместимые умные устройства")
 Person(specialist, "Specialist", "Специалист подключения, Специалист сопровождения или другой внутренний")
@@ -25,7 +25,7 @@ Container_Boundary(SmartHouseSystem, "Система Умный Дом") {
   Container(AdminUsersServices, "Администрирование пользователей и специалистов")
 }
 
-'''''' Управление контроллерами систем умного дома
+'''''' UI: Управление контроллерами систем умного дома
 Rel(user, WebSite, "Управляет умными устройствами в доме")
 Rel(user, MobileApp, "Управляет умными устройствами в доме")
 Rel(user, WebSite, "Получает состояния устройств умного дома и показания телеметрии")
@@ -38,12 +38,11 @@ Rel(MobileApp, ApiGateway, "Отправляет запросы на управ�
 Rel(WebSite, ApiGateway, "Отправляет запросы на управление умными устройствами, получение состояний устройств, истории команд и состояний, а также показаний телеметрии")
 Rel(InternalWebSite, ApiGateway, "Отправляет запросы на управление умными устройствами, получение состояний устройств, истории команд и состояний, а также показаний телеметрии")
 
-'''''' Администрирование пользователей и специалистов
+'''''' UI: Администрирование пользователей и специалистов
 Rel(user, WebSite, "Регистрируется в системе")
 Rel(user, WebSite, "Просматривает собственные перс данные и данные договоров")
 Rel(user, MobileApp, "Регистрируется в системе")
 Rel(user, MobileApp, "Просматривает и изменяет собственные аутентификационных данных")
-
 
 Rel(specialist, InternalWebSite, "Просматривает и изменяет собственные аутентификационные данные")
 Rel(specialist, InternalWebSite, "Просматривает и изменяет аутентификационные, персональные данные и данные договоров Пользователей")
@@ -59,9 +58,9 @@ Rel(InternalWebSite, ApiGateway, "Отправляет запросы на ре�
 
 '''''' Управление контроллерами систем умного дома
 Container_Boundary(ControllerManagementServices, "Управление контроллерами систем умного дома") {
-  Container(DeviceControlService, DeviceControlService, "Java, Spring", "Получение, исполнение и предоставление истории команд управления умными устройствами")
+  Container(DeviceControlService, DeviceControlService, "Java, Spring", "Исполняет команды управления умными устройствами, а также предоставление истории команд и состояний")
   ContainerDb(DeviceControlDatabase, DeviceControlDatabase, "Cassandra", "Хранит историю управления умными устройствами и их состояний")
-  ContainerQueue(ControlCommandsQueue, ControlCommandsQueue, "Kafka", "Топики для отправки управляющие команд на умные устройства и получения результатов выполнения")
+  ContainerQueue(ControlCommandsQueue, ControlCommandsQueue, "Kafka", "Топики для отправки команд на умные устройства и получения результатов выполнения")
   Container(ProtocolControlService, ProtocolControlService, "Java, Spring", "Непосредственное протокольное взаимодействие с умными устройствами")
 
   Rel(ApiGateway, DeviceControlService, "Передает авторизованные запросы на управление умными устройствами")

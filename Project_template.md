@@ -90,7 +90,14 @@
 
 **Диаграмма компонентов (Components)**
 
-Добавьте диаграмму для каждого из выделенных микросервисов.
+Для сервисов домена Управление контроллерами систем умного дома:
+1. [Компонентная диаграмма сервиса DeviceControlService](diagrams/component/Component_DeviceControl.jpg)
+ 
+![Компонентная диаграмма сервиса DeviceControlService](diagrams/component/Component_DeviceControl.jpg)
+
+2. [Компонентная диаграмма сервиса ProtocolControlService](diagrams/component/Component_ProtocolControl.jpg)
+
+![Компонентная диаграмма сервиса ProtocolControlService](diagrams/component/Component_ProtocolControl.jpg)
 
 **Диаграмма кода (Code)**
 
