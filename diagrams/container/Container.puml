@@ -1,29 +1,153 @@
 @startuml
-title FitLife Container Diagram
+title SmardHouse System Container Diagram
 
 top to bottom direction
 
 !include <C4/C4_Container>
 
-Person(user, "User", "A user of the fitness club system")
-Person(admin, "Administrator", "An administrator managing the system")
-System(FitLifeSystem, "FitLife System", "System managing memberships, schedules, and payments")
+Person_Ext(user, "User", "Пользователь, в доме которого есть совместимые умные устройства")
+Person(specialist, "Specialist", "Специалист подключения, Специалист сопровождения или другой внутренний")
+System(SmartHouseSystem, "SmardHouse System", "Управление и мониторинг устройствами умного дома")
 
-Container_Boundary(FitLifeSystem, "FitLife System") {
-  Container(WebApp, "Web Application", "Java, Spring", "Handles user interactions")
-  Container(MobileApp, "Mobile Application", "Kotlin, Swift", "Allows users to manage their membership")
-  Container(PaymentService, "Payment Service", "Node.js", "Processes payments")
-  Container(Database, "Database", "PostgreSQL", "Stores user data and schedules")
+System_Ext(controller, "Модуль управления умным устройством", "Управляет умным устройством в доме")
+System_Ext(sensor, "Датчик телеметрии", "Возвращает телеметрию: температура, влажность, освещенность и т.д.")
+System_Ext(NC, "Центр Нотификаций", "Отправляет SMS/Push/EMail указанным получателям")
+
+Container_Boundary(SmartHouseSystem, "Система Умный Дом") {
+  Container(WebSite, "WebSite", "Java, Spring", "Взаимодействие с пользователем через Веб Интерфейс")
+  Container(MobileApp, "MobileApplication", "Kotlin, Swift", "Взаимодействие с пользователем через мобильное приложение")
+  Container(InternalWebSite, "InternalWebSite", "Java, Spring", "Взаимодействие со специалистом через внутренний Вэб Интерфейс")
+  Container(ApiGateway, "APIGateway", "Java, Spring", "Балансировка и маршрутизация запросов")
+
+  Container(ControllerManagementServices, "Управление контроллерами систем умного дома")
+  Container(MonitoringServices, "Мониторинг датчиков умного дома")
+  Container(AdminDevicesServices, "Администрирование устройств умного дома")
+  Container(AdminUsersServices, "Администрирование пользователей и специалистов")
 }
 
-System_Ext(api, "Third-Party API", "External API for fitness data integration")
-System_Ext(bank, "Bank System", "External bank for processing payments")
+'''''' Управление контроллерами систем умного дома
+Rel(user, WebSite, "Управляет умными устройствами в доме")
+Rel(user, MobileApp, "Управляет умными устройствами в доме")
+Rel(user, WebSite, "Получает состояния устройств умного дома и показания телеметрии")
+Rel(user, MobileApp, "Получает состояния устройств умного дома и показания телеметрии")
 
-Rel(user, WebApp, "Uses the system")
-Rel(admin, WebApp,"Manages the system")
-Rel(WebApp,PaymentService,"Processes payment requests")
-Rel(PaymentService,bank,"Processes payments")
-Rel(WebApp,Database,"Reads/Writes user data")
-Rel(MobileApp,Database,"Reads/Writes user data")
-Rel(WebApp,api,"Fetches fitness data")
+Rel(specialist, InternalWebSite, "Управляет умными устройствами в доме пользователя")
+Rel(specialist, InternalWebSite, "Получает состояния устройств умного дома и показания телеметрии")
+
+Rel(MobileApp, ApiGateway, "Отправляет запросы на управление умными устройствами, получение состояний устройств, истории команд и состояний, а также показаний телеметрии")
+Rel(WebSite, ApiGateway, "Отправляет запросы на управление умными устройствами, получение состояний устройств, истории команд и состояний, а также показаний телеметрии")
+Rel(InternalWebSite, ApiGateway, "Отправляет запросы на управление умными устройствами, получение состояний устройств, истории команд и состояний, а также показаний телеметрии")
+
+'''''' Администрирование пользователей и специалистов
+Rel(user, WebSite, "Регистрируется в системе")
+Rel(user, WebSite, "Просматривает собственные перс данные и данные договоров")
+Rel(user, MobileApp, "Регистрируется в системе")
+Rel(user, MobileApp, "Просматривает и изменяет собственные аутентификационных данных")
+
+
+Rel(specialist, InternalWebSite, "Просматривает и изменяет собственные аутентификационные данные")
+Rel(specialist, InternalWebSite, "Просматривает и изменяет аутентификационные, персональные данные и данные договоров Пользователей")
+Rel(specialist, InternalWebSite, "Регистрирует, изменяет полномочия и блокирует Пользователей и Специалистов")
+
+Rel(MobileApp, ApiGateway, "Отправляет запросы на просмотр аутентификационных данных, а также перс данных и данных договоров пользователей")
+Rel(MobileApp, ApiGateway, "Отправляет запросы на регистрацию Пользователей")
+Rel(WebSite, ApiGateway, "Отправляет запросы на просмотр аутентификационных данных, а также перс данных и данных договоров пользователей")
+Rel(WebSite, ApiGateway, "Отправляет запросы на регистрацию Пользователей")
+Rel(InternalWebSite, ApiGateway, "Отправляет запросы на просмотр аутентификационных данных, а также перс данных и данных договоров пользователей")
+Rel(InternalWebSite, ApiGateway, "Отправляет запросы на регистрацию, изменение полномочий и блокировку Пользователей и Специалистов")
+
+
+'''''' Управление контроллерами систем умного дома
+Container_Boundary(ControllerManagementServices, "Управление контроллерами систем умного дома") {
+  Container(DeviceControlService, DeviceControlService, "Java, Spring", "Получение, исполнение и предоставление истории команд управления умными устройствами")
+  ContainerDb(DeviceControlDatabase, DeviceControlDatabase, "Cassandra", "Хранит историю управления умными устройствами и их состояний")
+  ContainerQueue(ControlCommandsQueue, ControlCommandsQueue, "Kafka", "Топики для отправки управляющие команд на умные устройства и получения результатов выполнения")
+  Container(ProtocolControlService, ProtocolControlService, "Java, Spring", "Непосредственное протокольное взаимодействие с умными устройствами")
+
+  Rel(ApiGateway, DeviceControlService, "Передает авторизованные запросы на управление умными устройствами")
+  Rel(ApiGateway, DeviceControlService, "Передает авторизованные запросы на получение состояния умных устройств")
+  Rel(ApiGateway, DeviceControlService, "Передает авторизованные запросы на получение истории состояний умных устройств")
+  Rel(ApiGateway, DeviceControlService, "Передает авторизованные запросы на получение истории команд управления умными устройствами")
+  Rel(DeviceControlService, DeviceControlDatabase, "Читает и обновляет историю управления умными устройствами")
+  Rel(DeviceControlService, ControlCommandsQueue, "Отправляет управляющие и статусные команды на умные устройства")
+  Rel(DeviceControlService, ControlCommandsQueue, "Получает результаты выполнения управляющих и статусных команд на умные устройства")
+  Rel(DeviceControlService, ProtocolControlService, "Синхронно получает статусы умных устройств")
+  Rel(DeviceControlService, ProtocolControlService, "Синхронно отправляет управляющие команды на умные устройства")
+  Rel(ProtocolControlService, ControlCommandsQueue, "Получает управляющие команды на умные устройства")
+  Rel(ProtocolControlService, ControlCommandsQueue, "Отправляет результаты выполнения управляющих команд")
+  Rel(ProtocolControlService, controller, "Отправляет команды на умные устройства")
+  Rel(ProtocolControlService, controller, "Получает от умных устройств результаты выполнения команд (если требуется)")
+
+  Rel(DeviceControlService,NC, "Уведомляет об изменении состояния умного устройства используя")
+  Rel(NC,user,"Передает уведомления об изменении состояния умного устройства")
+}
+
+'''''' Мониторинг датчиков умного дома
+Container_Boundary(MonitoringServices, "Мониторинг датчиков умного дома") {
+  Container(TelemetryService, TelemetryService, "Java, Spring", "Получение текущих и исторических данных телеметрии с датчиков")
+  ContainerDb(TelemetryDatabase, TelemetryDatabase, "Cassandra", "Хранит ряды снятых показателей телеметрии")
+  Container(ProtocolSensorService, ProtocolSensorService, "Java, Spring", "Непосредственное протокольное взаимодействие с датчиками")
+  ContainerQueue(RawTelemetryQueue, RawTelemetryQueue, "Kafka", "Очередь необработанных данных телеметрии")
+  ContainerQueue(TelemetryQueue, TelemetryQueue, "Kafka", "Очередь обработанных данных телеметрии")
+  Container(RawTelemetryDataConsumer, RawTelemetryDataConsumer, "Java, Spring", "Обработка данных телеметрии и запись в очередь")
+  Container(TelemetryDataConsumer, TelemetryDataConsumer, "Java, Spring", "Обработка данных телеметрии и сохранение в Базу Данных")
+
+  Rel(ApiGateway, TelemetryService, "Передает авторизованные запросы на получение текущих и исторических данных телеметрии с датчиков")
+  Rel(TelemetryService, TelemetryDatabase, "Читает данные телеметрии")
+  Rel(TelemetryService, ProtocolSensorService, "Синхронно получает актуальные данные телеметрии")
+  Rel(RawTelemetryDataConsumer, TelemetryQueue, "Записывает обработанные данные телеметрии в очередь")
+  Rel(RawTelemetryDataConsumer, RawTelemetryQueue, "Читает необработанные данные телеметрии от датчиков")
+  Rel(TelemetryDataConsumer, TelemetryQueue, "Читает обработанные данные телеметрии от датчиков")
+  Rel(TelemetryDataConsumer, TelemetryDatabase, "Записывает обработанные данные телеметрии в базу данных")
+  Rel(ProtocolSensorService, sensor, "Синхронно выполняет управляющие команды")
+  Rel(ProtocolSensorService, sensor, "Синхронно получает текущую телеметрию")
+  Rel(sensor, ProtocolSensorService, "Отправляет телеметрию на открытый порт (если поддерживает и активно)")
+  Rel(ProtocolSensorService, RawTelemetryQueue, "Записывает полученные необработанные данные телеметрии от датчиков")
+
+}
+
+'''''' Администрирование умного дома
+Container_Boundary(AdminDevicesServices, "Администрирование умного дома") {
+  Container(DeviceAdminService, DeviceAdminService, "Java, Spring", "Регистрация/Подключение/Отключение умных устройств и датчиков")
+  Container(ProtocolInitDeviceService, ProtocolInitDeviceService, "Java, Spring", "Протокольное управление умными устройствами и датчиками")
+  ContainerDb(DeviceAdminDatabase, DeviceAdminDatabase, "PostgreSQL", "Хранит информацию о регистрации контроллеров, датчиков телеметрии и их статус активности")
+
+  Rel(ApiGateway, DeviceAdminService, "Передает авторизованные запросы на подключение/отключение умных устройств и датчиков")
+  Rel(ApiGateway, DeviceAdminService, "Передает авторизованные запросы на получение подключенных устройств и датчиков")
+  Rel(DeviceAdminService, DeviceAdminDatabase, "Читает и изменяет регистрационную и второстепенную информацию о подключенных устройствах и датчиках")
+  Rel(DeviceAdminService, ProtocolInitDeviceService, "Отправляет синхронные управляющие команды (инициализация/отключение)")
+  Rel(ProtocolInitDeviceService, sensor, "Синхронно выполняет управляющие команды")
+  Rel(ProtocolInitDeviceService, controller, "Синхронно выполняет управляющие команды")
+}
+
+'''''' Администрирование пользователей и специалистов
+Container_Boundary(AdminUsersServices, "Администрирование пользователей и специалистов") {
+  Container(AuthService, AuthService, "Java, Spring", "Аутентификация пользователя, выдача JWT")
+  Container(AuthDataService, AuthDataService, "Java, Spring", "Изменение аутентификационных данных пользователей и специалистов")
+  Container(AuthorizeService, AuthorizeService, "Java, Spring", "Авторизация запросов аутентифицированных пользователей и специалистов")
+  Container(AuthorizeDataService, AuthorizeDataService, "Java, Spring", "Изменение полномочий пользователей и специалистов согласно настроенное ролевой модели")
+  Container(UserProfileService, UserProfileService, "Java, Spring", "Получение и изменение персональных данных пользователей и данных договоров")
+
+  ContainerDb(AuthDatabase, AuthDatabase, "MongoDB", "Хранит аутентификационные данные пользователей и специалистов")
+  ContainerDb(AuthorizeDatabase, AuthorizeDatabase", "PostgreSQL", "Хранит ролевую модель полномочий и выданные полномочия пользователям и специалистам, а также их историю")
+  ContainerDb(UserDatabase, UserDatabase, "PostgreSQL", "Хранит персональные данные, данные договоров пользователей и историю их изменений")
+
+  Rel(AuthService, AuthDatabase, "Получает данные для аутентификации и фиксирует обращения")
+  Rel(AuthDataService, AuthDatabase, "Изменяет данные для аутентификации и фиксирует в истории изменений")
+  Rel(AuthorizeDataService, AuthorizeDatabase, "Изменяет данные о полномочиях пользователей и специалистов")
+  Rel(AuthorizeService, AuthorizeDatabase, "Получает данные для авторизации действий")
+  Rel(UserProfileService, UserDatabase, "Получает/изменяет персональные данные и данные договоров пользователей и фиксирует в истории изменений")
+
+  Rel(ApiGateway, AuthService, "Проверяет аутентификационные данные и получает JWT")
+  Rel(ApiGateway, AuthorizeService, "Проверяет наличие полномочий на выполнение запроса")
+
+  Rel(ApiGateway, AuthDataService, "Передает авторизованные запросы на получение и изменение аутентификационных данных")
+  Rel(ApiGateway, AuthorizeDataService, "Передает авторизованные запросы на получение и изменение данных о полномочиях")
+  Rel(ApiGateway, UserProfileService, "Передает авторизованные запросы на получение и изменение перс данных и данных договоров пользователей")
+
+  Rel(UserProfileService,NC, "Уведомляет об изменении персональных данных или данных договоров используя")
+  Rel(AuthDataService,NC, "Уведомляет об изменении аутентификационных данных используя")
+  Rel(NC,user,"Передает уведомления об изменении персональных, аутентификационных данных, данных договоров")
+  Rel(NC,specialist,"Передает уведомления об изменении аутентификационных данных")
+}
 @enduml
