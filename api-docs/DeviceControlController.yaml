@@ -1,0 +1,149 @@
+openapi: 3.1.0
+info:
+  title: Управление контроллерами систем умного дома
+  description: Управление контроллерами систем умного дома
+  version: 1.0.0
+paths:
+  /device/status:
+    get:
+      summary: Получение статуса
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: Статус устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStatus'
+  /device/status/history:
+    get:
+      summary: Получение истории статусов устройства
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: История изменения статусов устройства
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref":'#/components/schemas/DeviceStatus'
+                }
+              }
+            }
+          }
+  /device/commands/control:
+    post:
+      summary: Отправить управляющую команду на устройство
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCommandParams'
+      responses:
+        '200':
+          description: Управляющая команда успешно отправлена на устройство
+  /device/commands/status:
+    post:
+      summary: Отправить команду запроса статуса на устройство
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCommandParams'
+      responses:
+        '200':
+          description: Команда запроса статуса успешно отправлена на устройство
+  /device/commands:
+    get:
+      summary: Получение истории команд, отправленных на устройство
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      responses:
+        '200':
+          description: Список отправленных команд на устройство
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": '#/components/schemas/Command'
+                }
+              }
+            }
+          }
+components:
+  schemas:
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: integer
+        userid:
+          type: integer
+        description:
+          type: string
+        location:
+          type: string
+        registeredDate:
+          type: date
+        status:
+          type: string
+        statusTime:
+          type: time
+        lastDateConnected:
+          type: date
+    DeviceStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        statusTime:
+          type: time
+    Command:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        initiatorUserId:
+          type: integer
+        sendTime:
+          type: time
+        finishTime:
+          type: time
+        commandPayload:
+          type: string
+        status:
+          type: string
+        statusTime:
+          type: time
+        responsePayload:
+          type: string
+    DeviceCommandParams:
+      type: object
+      properties:
+        "Device": {
+          "$ref": "#/components/schemas/Device"
+        }
+        "Command": {
+          "$ref": "#/components/schemas/Command"
+        }

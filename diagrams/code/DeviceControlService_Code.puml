@@ -6,13 +6,12 @@ top to bottom direction
 package "Controllers" {
   class DeviceControlContoller {
      - DeviceControlService: deviceControlService
-     - processControlCommand(device: DeviceDto, command: CommandDto): String
-     - processStatusCommand(device: DeviceDto, command: CommandDto): String
-     - getDeviceStatus(device: DeviceDto): DeviceStatusDto
-     - getCommandHistory(device: DeviceDto): List<CommandDto>
-     - getStatusHistory(device: DeviceDto): List<DeviceStatusDto>
-     + handleRequest(request: Request): Response
-  }
+     + processControlCommand(device: DeviceDto, command: CommandDto): String
+     + processStatusCommand(device: DeviceDto, command: CommandDto): String
+     + getDeviceStatus(device: DeviceDto): DeviceStatusDto
+     + getCommandHistory(device: DeviceDto): List<CommandDto>
+     + getStatusHistory(device: DeviceDto): List<DeviceStatusDto>
+    }
 }
 
 package "Services" {
@@ -124,7 +123,7 @@ package "Data Models" {
       - id: UUID
       - type: String
       - initiator: User
-      - sendTime: Instant
+      - sentTime: Instant
       - finishTime: Instant
       - status: CommandStatus
       - deviceStatus: DeviceStatus
@@ -137,7 +136,7 @@ package "Data Models" {
       + id: UUID
       + type: String
       + initiatorUserId:Integer
-      + sendTime: Instant
+      + sentTime: Instant
       + finishTime: Instant
       + commandPayload: String
       + status: String

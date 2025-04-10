@@ -1,0 +1,157 @@
+asyncapi: 2.6.0
+info:
+  title: Device Control Commands API
+  version: 1.0.0
+  description: The API notifies whenever new command to Devices are published
+servers:
+  dev:
+    url: my-kafka.smarthouse.io:9092
+    protocol: kafka-secure
+    description: 'параметры брокера Kafka'
+defaultContentType: application/json
+channels:
+  command.publishing:
+    description: Commands published by DeviceControl / KafkaProducer
+    publish:
+      summary: 'Публикация команд, полученных сервисом с пользовательского интерфейса'
+      operationId: PublishNewCommand
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        oneOf:
+          - $ref: '#/components/messages/control_command'
+          - $ref: '#/components/messages/status_command'
+    bindings:
+      kafka:
+        key:
+          type: string
+          enum: [ 'control_command', 'status_command' ]
+  command.responses:
+    description: Command responses being consumed by DeviceControl / KafkaConsumer
+    subscribe:
+      summary: 'Получение и обработка ответов на команды с устройств'
+      operationId: ProcessCommandResponse
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        $ref: '#/components/messages/command_response'
+components:
+  messages:
+    control_command:
+      name: control_command
+      title: control_command
+      summary: 'Управляющие команды на устройства'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/control_command_header'
+      payload:
+        $ref: "#/components/schemas/control_command"
+    status_command:
+      name: status_command
+      title: status_command
+      summary: 'Команды получения статуса устройства'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/status_command_header'
+      payload:
+        $ref: "#/components/schemas/status_command"
+    command_response:
+      name: command_response
+      title: command_response
+      summary: 'Ответы на команды с устройств'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/command_response_header'
+      payload:
+        $ref: "#/components/schemas/command_response"
+  schemas:
+    control_command:
+      type: object
+      description: 'Управляющая команда на устройство'
+      properties:
+        id:
+          type: string
+          description: 'cmdcntrl-x-xx-xx-xxxx'
+        command_type:
+          type: integer
+        userid:
+          type: integer
+        attributes:
+          type: string
+          description: 'json formatted data'
+        sentAt:
+          $ref: "#/components/schemas/sentAt"
+    status_command:
+      type: object
+      description: 'Команда получения статуса от устройства'
+      properties:
+        id:
+          type: string
+          description: 'cmdstat-x-xx-xxx-xxx'
+        command_type:
+          type: integer
+        userid:
+          type: integer
+        sentAt:
+          $ref: "#/components/schemas/sentAt"
+    command_response:
+      type: object
+      description: 'Ответ с устройства на полученную команду'
+      properties:
+        command_id:
+          type: string
+          description: 'cmndrps-x-xx-xxx-xxx'
+        payload:
+          type: string
+          description: 'json formatted data'
+        content:
+          type: object
+          properties:
+            response_type:
+              type: string
+              $ref: "#/components/schemas/response_type"
+    sentAt:
+      type: string
+      format: date-time
+      description: Date and time when the message was sent.
+    response_type:
+      type: string
+      enum:
+        - success
+        - failed
+  securitySchemes:
+    saslScram:
+      type: scramSha256
+      description: протокол безопасности SASL_SSL, механизм безопасности SCRAM-SHA-256
+  parameters:
+    commandId:
+      description: UUID команды на устройство
+      schema:
+        type: string
+        description: 'x-xx:xx-xx-xx-xxx'
+  messageTraits:
+    control_command_header:
+      headers:
+        description: 'Заголовок управляющей команды'
+    status_command_header:
+      headers:
+        type: object
+        description: 'Заголовок статусной команды'
+    command_response_header:
+      headers:
+        type: object
+        description: 'Заголовок ответа на команду'
+  operationTraits:
+    kafka:
+      bindings:
+        kafka:
+          topic: 'inputs_topic'
+          partitions: 3
+          replicas: 3
+          topicConfiguration:
+          cleanup.policy: [ "delete", "compact" ]
+          retention.ms: 604800000
+          retention.bytes: 1000000000
+          delete.retention.ms: 86400000
+          max.message.bytes: 1048588
+        bindingVersion: '0.4.0'
