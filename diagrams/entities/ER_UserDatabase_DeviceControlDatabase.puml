@@ -1,0 +1,106 @@
+@startuml
+title SmartHouse DeviceControlDatabase + UserDatabase ER diagram
+
+package UserDatabase {
+    entity Users {
+      * id : integer
+      --
+      * name : varchar
+      * surname : varchar
+      patronymic : varchar
+      * registrationDate : date
+      * status : integer
+      statusUpdateTime : timestamp
+      * actualContactId : UUID
+    }
+
+    entity Contacts {
+      * id : UUID
+      --
+      * userId : integer
+      * type : integer
+      * address : varchar
+      email : varchar
+      * mobilePhone : varchar
+      * createdTime : timestamp
+      lastUpdateTime : timestamp
+      default : boolean
+      validated : boolean
+    }
+
+    entity ContactType {
+       * id : integer
+       __
+       * description : varchar
+    }
+
+    entity Agreements {
+      * id : integer
+      --
+      * userId : integer
+      * acceptanceTime : timestamp
+      * signedSpecialist : integer
+      * activeStatus : integer
+      statusUpdateTime : timestamp
+    }
+
+    ContactType ||--{ Contacts : "assigned to many"
+    Users ||--{ Contacts : "has 1 or many"
+    Users ||--{ Agreements : "has 1 or many"
+}
+
+package DeviceControlDatabase {
+    entity Devices {
+      * id : integer
+      --
+      * type : integer
+      * userId : integer
+      userDescription : varchar
+      * location : varchar
+      * registeredDate : date
+      lastStatus : UUID
+      lastStatusTime : timestamp
+      lastConnectedDate : date
+    }
+
+    entity DeviceStatuses {
+      * id : UUID
+      --
+      * commandId : UUID
+      * deviceId : UUID
+      * type : integer
+      * time : timestamp
+    }
+
+    entity Commands {
+      * id : UUID
+      --
+      * type : integer
+      * deviceId : integer
+      * initiatorId : integer
+      * sendTime : timestamp
+      * finishTime : timestamp
+      * status : integer
+      * statusTime : timestamp
+      responseId : UUID
+    }
+
+    entity CommandResponses {
+      * id : UUID
+      --
+      responseTime : timestamp
+      successFlag : boolean
+      responsePayload : bytea
+    }
+
+    ' Связи
+    Users ||--o{ Devices : "has many"
+    Users ||--o{ Commands : "sends many"
+    Devices ||--o{ Commands : "executes many"
+    Devices ||--o{ DeviceStatuses : "switches between many"
+    Commands ||--o| CommandResponses : "has zero or one"
+}
+
+
+
+@enduml

@@ -83,7 +83,7 @@ package "Data Models" {
       - id: Integer
       - name: String
       - surname: String
-      - patroniName : String
+      - patronymic : String
       - registrationDate : Date
       - status: UserStatus
       - statusTime: Instant
