@@ -101,7 +101,11 @@
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+Для сервиса DeviceControlService домена Управление контроллерами систем умного дома:
+
+[Диаграмма кода сервиса DeviceControlService](diagrams/code/DeviceControlService_Code.jpg)
+
+![Диаграмма кода сервиса DeviceControlService](diagrams/code/DeviceControlService_Code.jpg)
 
 # Задание 3. Разработка ER-диаграммы
 

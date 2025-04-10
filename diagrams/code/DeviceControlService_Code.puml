@@ -1,0 +1,205 @@
+@startuml
+title SmartHouse DeviceControlService Code Diagram
+
+top to bottom direction
+
+package "Controllers" {
+  class DeviceControlContoller {
+     - DeviceControlService: deviceControlService
+     - processControlCommand(device: DeviceDto, command: CommandDto): String
+     - processStatusCommand(device: DeviceDto, command: CommandDto): String
+     - getDeviceStatus(device: DeviceDto): DeviceStatusDto
+     - getCommandHistory(device: DeviceDto): List<CommandDto>
+     - getStatusHistory(device: DeviceDto): List<DeviceStatusDto>
+     + handleRequest(request: Request): Response
+  }
+}
+
+package "Services" {
+    class DeviceControlService {
+      - deviceControlRepository: DeviceControlRepository
+      - deviceStatusRepository: DeviceControlRepository
+      - deviceControlKafkaProducer: DeviceControlKafkaProducts
+      - deviceSyncControlClient : DeviceSyncControlClient
+      + processCommand(device: Device, command: Command): String
+      + processCommandResults(device: Device, сommandResult: CommandResult): String
+      + getDeviceStatus(device: Device): DeviceStatus
+      + getCommandHistory(device: Device): List<Command>
+      + getStatusHistory(device: Device): List<DeviceStatus>
+    }
+
+    class DeviceSyncControlClient {
+      - httpClient: HTTPClient
+      + processCommandSync(device: Device, command: Command): void
+      + getDeviceStatusSync(device: Device): void
+    }
+
+    class DeviceControlKafkaProducer {
+      + publishDeviceCommand(device: Device, command: Command): void
+    }
+
+    class DeviceControlKafkaConsumer {
+      - deviceControlService: DeviceControlService
+      + consume(topic: String): List<String>
+    }
+}
+
+package "Repositories" {
+    class DeviceControlRepository {
+      + saveCommand(command: Command): void
+      + getCommandHistory(deviceId: UUID): List<Command>
+    }
+
+    class DeviceStatusRepository {
+      + saveStatus(device:Device): void
+      + getStatusHistory(deviceId: UUID): List<DeviceStatus>
+    }
+}
+
+package "Data Models" {
+    enum DeviceType {
+      heating
+      light
+      boiler
+    }
+
+    enum DeviceStatusType {
+      on
+      off
+      switching_on
+      switching_off
+    }
+
+    enum CommandStatusType {
+      initiated
+      received_by_device
+      rejected_by_device
+      in_progress
+      completed
+      failed_in_progress
+    }
+
+    class User {
+      - id: Integer
+      - name: String
+      - surname: String
+      - patroniName : String
+      - registrationDate : Date
+      - status: UserStatus
+      - statusTime: Instant
+      - email : String
+      - mobilePhone : String
+      + getters()
+      + setters()
+    }
+
+    class Device {
+      - id: Integer
+      - type: DeviceType
+      - userId: Integer
+      - userDescription: String
+      - location: String
+      - registeredDate: Date
+      - status: DeviceStatus
+      - lastDateConnected: Date
+      + getters()
+      + setters()
+    }
+
+    class DeviceDto {
+      + id: Integer
+      + type: String
+      + userId: Integer
+      + userDescription: String
+      + location: String
+      + registeredDate: Date
+      + status: String
+      + statusTime: Instant
+      + lastDateConnected: Date
+      + convertToEntity(deviceDto: DeviceDto): Device
+      + convertToDto(device: Device): DeviceDto
+    }
+
+    class Command {
+      - id: UUID
+      - type: String
+      - initiator: User
+      - sendTime: Instant
+      - finishTime: Instant
+      - status: CommandStatus
+      - deviceStatus: DeviceStatus
+      - commandPayload: Map<String, Object>
+      + getters()
+      + setters()
+    }
+
+    class CommandDto {
+      + id: UUID
+      + type: String
+      + initiatorUserId:Integer
+      + sendTime: Instant
+      + finishTime: Instant
+      + commandPayload: String
+      + status: String
+      + statusTime: Instant
+      + responsePayload: String
+      + convertToEntity(commandDto: CommandDto): Command
+      + convertToDto(command: Command): CommandDto
+    }
+
+    class DeviceStatus {
+      - id: UUID
+      - type: DeviceStatusType
+      - time: Instant
+      + getters()
+      + setters()
+    }
+
+    class DeviceStatusDto {
+      + id: String
+      + type: String
+      + time: Instant
+      + convertToEntity(commandDto: CommandDto): Command
+      + convertToDto(command: Command): CommandDto
+    }
+
+    class CommandStatus {
+      - time: Instant
+      - type: CommandStatusType
+      - responsePayload: Map<String, Object>
+      + getters()
+      + setters()
+      + isSuccessful() : boolean
+    }
+
+    User --> Device : has many devices
+    User --> Command : initiates many commands
+    Device --> DeviceType : has type of
+    Device --> DeviceStatus : has status
+    DeviceStatus --> DeviceStatusType : has type of
+    Command --> DeviceStatus : causes device status
+    Command --> CommandStatus : has status
+    CommandStatus --> CommandStatusType : has type
+}
+
+component "Kafka Message Broker" as Kafka {
+}
+
+DeviceControlContoller --> DeviceControlService : delegates processing commands
+DeviceControlService --> DeviceControlKafkaProducer : publishes control command or status query \n to device async
+DeviceControlService --> DeviceControlRepository : saves command and gets command history
+DeviceControlService --> DeviceStatusRepository : saves device status and gets status history
+DeviceControlService --> DeviceSyncControlClient : sends control command or status query \n to device sync
+DeviceControlRepository --> Device : creates, gets, changes
+DeviceStatusRepository --> DeviceStatus : creates, gets, changes
+DeviceControlKafkaConsumer --> DeviceControlService : delegates processing command results
+Kafka --> DeviceControlKafkaConsumer : consumes messages from Kafka
+DeviceControlKafkaProducer --> Kafka : produces messages to Kafka
+DeviceControlContoller --> DeviceDto : transfers data objects
+DeviceDto --> Device : transfers
+DeviceControlContoller --> CommandDto : transfers data objects
+CommandDto --> Command : transfers
+DeviceControlContoller --> DeviceStatusDto : transfers data objects
+DeviceStatusDto --> DeviceStatus : transfers
+
+@enduml
